@@ -31,15 +31,17 @@ void dam_serial_init(void)
 
 static void _send(const char *cmd)
 {
-    uart_write_bytes(DAC_UART_NUM, cmd,   strlen(cmd));
+    uart_write_bytes(DAC_UART_NUM, cmd,    strlen(cmd));
     uart_write_bytes(DAC_UART_NUM, "\r\n", 2);
     ESP_LOGI(TAG, "→ %s", cmd);
 }
 
 void dam_serial_send_volume(int vol)
 {
-    char buf[12];
-    snprintf(buf, sizeof(buf), "V%d", vol - 99);   // vol=99 → V0, vol=50 → V-49
+    // vol=99 → V0 (0 dB), vol=50 → V-49 (-49 dB), vol=0 → V-99 (-99 dB)
+    // Buffer is 16 to satisfy -Wformat-truncation (GCC estimates max int width)
+    char buf[16];
+    snprintf(buf, sizeof(buf), "V%d", vol - 99);
     _send(buf);
 }
 
@@ -52,16 +54,20 @@ void dam_serial_send_mute(bool muted, int vol)
     }
 }
 
-void dam_serial_send_input(int input)
+void dam_serial_send_input(dac_input_t input)
 {
     // DAM 1021: I3=AUTO  I0=USB  I1=SPDIF  I2=OPT
-    static const char *cmds[4] = { "I3", "I0", "I1", "I2" };
-    if (input >= 0 && input < 4) _send(cmds[input]);
+    static const char *cmds[DAC_INPUT_COUNT] = { "I3", "I0", "I1", "I2" };
+    if ((int)input >= 0 && (int)input < DAC_INPUT_COUNT) {
+        _send(cmds[(int)input]);
+    }
 }
 
-void dam_serial_send_filter(int filter)
+void dam_serial_send_filter(dac_filter_t filter)
 {
     // DAM 1021: F4=Linear  F5=Mixed  F6=Minimum  F7=Soft
-    static const char *cmds[4] = { "F4", "F5", "F6", "F7" };
-    if (filter >= 0 && filter < 4) _send(cmds[filter]);
+    static const char *cmds[DAC_FILTER_COUNT] = { "F4", "F5", "F6", "F7" };
+    if ((int)filter >= 0 && (int)filter < DAC_FILTER_COUNT) {
+        _send(cmds[(int)filter]);
+    }
 }

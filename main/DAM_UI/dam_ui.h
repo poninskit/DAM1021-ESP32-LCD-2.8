@@ -2,44 +2,62 @@
 #include <stdbool.h>
 #include "lvgl.h"
 
-// Input sources
+// ─── Input sources ────────────────────────────────────────────────────────────
+// Matches DAM 1021 I-command mapping
 typedef enum {
-    DAC_INPUT_AUTO  = 0,
-    DAC_INPUT_USB   = 1,
-    DAC_INPUT_SPDIF = 2,
-    DAC_INPUT_OPT   = 3,
+    DAC_INPUT_AUTO  = 0,   // I3 – auto-detect
+    DAC_INPUT_USB   = 1,   // I0 – USB
+    DAC_INPUT_SPDIF = 2,   // I1 – S/PDIF optical
+    DAC_INPUT_OPT   = 3,   // I2 – optical/coaxial
 } dac_input_t;
+#define DAC_INPUT_COUNT 4
 
-// Digital filters
+// ─── Filter modes ─────────────────────────────────────────────────────────────
 typedef enum {
-    DAC_FILTER_LINEAR  = 0,
-    DAC_FILTER_MIXED   = 1,
-    DAC_FILTER_MINIMUM = 2,
-    DAC_FILTER_SOFT    = 3,
+    DAC_FILTER_LINEAR  = 0,  // F4
+    DAC_FILTER_MIXED   = 1,  // F5
+    DAC_FILTER_MINIMUM = 2,  // F6
+    DAC_FILTER_SOFT    = 3,  // F7
 } dac_filter_t;
+#define DAC_FILTER_COUNT 4
 
-// All user actions from touch
+// ─── User actions ─────────────────────────────────────────────────────────────
 typedef enum {
     ACT_NONE = 0,
-    ACT_VOL_UP,
-    ACT_VOL_DOWN,
+
+    // Volume – arc widget sends ACT_VOL_SET with new value; remote sends UP/DOWN
+    ACT_VOL_SET,        // value = new volume 0-99 (from arc drag)
+    ACT_VOL_UP,         // +1 step (from IR remote)
+    ACT_VOL_DOWN,       // -1 step (from IR remote)
     ACT_MUTE,
+
+    // Input – direct select via touch buttons
     ACT_INPUT_AUTO,
     ACT_INPUT_USB,
     ACT_INPUT_SPDIF,
     ACT_INPUT_OPT,
+
+    // Filter – direct select via touch buttons
     ACT_FILTER_LINEAR,
     ACT_FILTER_MIXED,
     ACT_FILTER_MINIMUM,
     ACT_FILTER_SOFT,
+
+    // Input / filter cycle – from IR remote (Apple remote up/down/menu)
+    ACT_CHANNEL_LEFT,   // cycle input backward
+    ACT_CHANNEL_RIGHT,  // cycle input forward
+    ACT_FILTER_CYCLE,   // cycle filter forward
+    ACT_FILTER_BACK,    // cycle filter backward
 } dam_action_t;
 
-typedef void (*dam_action_cb_t)(dam_action_t action);
+// Callback – fires on touch or remote event.
+// 'value' is only meaningful for ACT_VOL_SET (new volume 0-99), 0 otherwise.
+typedef void (*dam_action_cb_t)(dam_action_t action, int value);
 
-// Build the full LVGL widget tree and register action callback.
+// ─── API ──────────────────────────────────────────────────────────────────────
 void dam_ui_init(dam_action_cb_t cb);
 
-// Update display to reflect new state (call after state changes).
-void dam_ui_set_volume(int vol, bool muted);   // vol 0-99, dB = vol-99
+// Sync display after state changes
+void dam_ui_set_volume(int vol, bool muted);   // vol 0-99
 void dam_ui_set_input (dac_input_t  input);
 void dam_ui_set_filter(dac_filter_t filter);

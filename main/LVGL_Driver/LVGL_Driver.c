@@ -67,9 +67,9 @@ void LVGL_Init(void)
     lv_disp_draw_buf_init(&disp_buf, buf1, buf2, EXAMPLE_LCD_H_RES * EXAMPLE_LCD_V_RES);
 #else
     ESP_LOGI(LVGL_TAG, "Allocate separate LVGL draw buffers from PSRAM");
-    buf1 = heap_caps_malloc(EXAMPLE_LCD_H_RES  * EXAMPLE_LCD_V_RES, MALLOC_CAP_SPIRAM);
+    buf1 = heap_caps_malloc(sizeof(lv_color_t) * EXAMPLE_LCD_H_RES * EXAMPLE_LCD_V_RES, MALLOC_CAP_SPIRAM);
     assert(buf1);
-    buf2 = heap_caps_malloc(EXAMPLE_LCD_H_RES  * EXAMPLE_LCD_V_RES, MALLOC_CAP_SPIRAM);
+    buf2 = heap_caps_malloc(sizeof(lv_color_t) * EXAMPLE_LCD_H_RES * EXAMPLE_LCD_V_RES, MALLOC_CAP_SPIRAM);
     assert(buf2);
     // initialize LVGL draw buffers
     lv_disp_draw_buf_init(&disp_buf, buf1, buf2, EXAMPLE_LCD_H_RES * EXAMPLE_LCD_V_RES);
@@ -77,8 +77,12 @@ void LVGL_Init(void)
 
     ESP_LOGI(LVGL_TAG, "Register display driver to LVGL");
     lv_disp_drv_init(&disp_drv);
-    disp_drv.hor_res = EXAMPLE_LCD_H_RES;
-    disp_drv.ver_res = EXAMPLE_LCD_V_RES;
+    // Physical panel dimensions — LVGL auto-swaps them to give 640×480 logical
+    // landscape when rotated=ROT_90 (lv_disp_get_hor_res returns ver_res, and vice-versa).
+    disp_drv.hor_res   = EXAMPLE_LCD_H_RES;  // physical width  = 480
+    disp_drv.ver_res   = EXAMPLE_LCD_V_RES;  // physical height = 640
+    disp_drv.rotated   = LV_DISP_ROT_90;
+    disp_drv.sw_rotate = 1;
     disp_drv.flush_cb = example_lvgl_flush_cb;
     disp_drv.draw_buf = &disp_buf;
     disp_drv.user_data = panel_handle;

@@ -9,6 +9,8 @@ idf_component_register(
                               "I2C_Driver/I2C_Driver.c"
                               "DAM_UI/dam_ui.c"
                               "DAM_Serial/dam_serial.c"
+                              "DAM_NVS/dam_nvs.c"
+                              "DAM_Remote/dam_remote.c"
 
                         INCLUDE_DIRS "./EXIO"
                                      "./Buzzer"
@@ -19,5 +21,7 @@ idf_component_register(
                                      "./I2C_Driver"
                                      "./DAM_UI"
                                      "./DAM_Serial"
+                                     "./DAM_NVS"
+                                     "./DAM_Remote"
                                      "."
                         )

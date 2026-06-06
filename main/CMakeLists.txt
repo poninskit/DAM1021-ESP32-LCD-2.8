@@ -7,6 +7,8 @@ idf_component_register(
                               "Touch_Driver/esp_lcd_touch/esp_lcd_touch.c"
                               "LVGL_Driver/LVGL_Driver.c"
                               "I2C_Driver/I2C_Driver.c"
+                              "DAM_UI/dam_ui.c"
+                              "DAM_Serial/dam_serial.c"
 
                         INCLUDE_DIRS "./EXIO"
                                      "./Buzzer"
@@ -15,5 +17,7 @@ idf_component_register(
                                      "./Touch_Driver/esp_lcd_touch"
                                      "./LVGL_Driver"
                                      "./I2C_Driver"
+                                     "./DAM_UI"
+                                     "./DAM_Serial"
                                      "."
                         )

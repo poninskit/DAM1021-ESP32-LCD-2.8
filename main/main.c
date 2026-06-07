@@ -130,6 +130,15 @@ static void handle_action(dam_action_t action, int value)
         dam_nvs_save(&s_state);
         break;
 
+    // ── Brightness (slider) ───────────────────────────────────────────────────
+    case ACT_BRIGHTNESS_SET:
+        if (value >= BRIGHTNESS_MIN && value <= BRIGHTNESS_MAX) {
+            s_state.brightness = value;
+            Set_Backlight((uint8_t)value);
+            dam_nvs_save(&s_state);
+        }
+        break;
+
     default:
         break;
     }
@@ -152,9 +161,11 @@ void app_main(void)
 
     // Build UI and apply persisted state
     dam_ui_init(handle_action);
-    dam_ui_set_volume(s_state.volume, s_state.muted);
-    dam_ui_set_input (s_state.input);
-    dam_ui_set_filter(s_state.filter);
+    dam_ui_set_volume    (s_state.volume, s_state.muted);
+    dam_ui_set_input     (s_state.input);
+    dam_ui_set_filter    (s_state.filter);
+    dam_ui_set_brightness(s_state.brightness);
+    Set_Backlight((uint8_t)s_state.brightness);
 
     // IR remote (GPIO0 – BOOT pad, usable as input after boot)
     dam_remote_init(DAM_IR_GPIO);

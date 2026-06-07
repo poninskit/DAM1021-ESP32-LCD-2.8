@@ -43,11 +43,14 @@ typedef enum {
     ACT_FILTER_MINIMUM,
     ACT_FILTER_SOFT,
 
-    // Input / filter cycle – from IR remote (Apple remote up/down/menu)
+    // Input / filter cycle – from IR remote or touch button
     ACT_CHANNEL_LEFT,   // cycle input backward
     ACT_CHANNEL_RIGHT,  // cycle input forward
     ACT_FILTER_CYCLE,   // cycle filter forward
     ACT_FILTER_BACK,    // cycle filter backward
+
+    // Brightness – from UI slider
+    ACT_BRIGHTNESS_SET, // value = new brightness 10-100
 } dam_action_t;
 
 // Callback – fires on touch or remote event.
@@ -58,6 +61,7 @@ typedef void (*dam_action_cb_t)(dam_action_t action, int value);
 void dam_ui_init(dam_action_cb_t cb);
 
 // Sync display after state changes
-void dam_ui_set_volume(int vol, bool muted);   // vol 0-99
-void dam_ui_set_input (dac_input_t  input);
-void dam_ui_set_filter(dac_filter_t filter);
+void dam_ui_set_volume    (int vol, bool muted);   // vol 0-99
+void dam_ui_set_input     (dac_input_t  input);
+void dam_ui_set_filter    (dac_filter_t filter);
+void dam_ui_set_brightness(int brightness);        // 10-100

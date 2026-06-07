@@ -8,6 +8,7 @@ idf_component_register(
                               "LVGL_Driver/LVGL_Driver.c"
                               "I2C_Driver/I2C_Driver.c"
                               "DAM_UI/dam_ui.c"
+                              "DAM_UI/lv_font_montserrat_digits_64.c"
                               "DAM_Serial/dam_serial.c"
                               "DAM_NVS/dam_nvs.c"
                               "DAM_Remote/dam_remote.c"

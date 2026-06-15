@@ -1,4 +1,4 @@
-#pragma once
+﻿#pragma once
 #include "dam_ui.h"    // for dam_action_t
 
 /*******************************************************************************
@@ -7,7 +7,7 @@
  * Wiring: IR receiver (e.g. TSOP4838) signal pin → IR_GPIO (default GPIO0).
  *   TSOP output is active-LOW: LOW when IR burst is received.
  *
- * Apple remote NEC mapping (address = 0x77E1):
+ * Apple remote NEC mapping (address = 0x87EE):
  *   Up     (0x0B) → ACT_CHANNEL_LEFT   cycle input backward
  *   Down   (0x0D) → ACT_CHANNEL_RIGHT  cycle input forward
  *   Right  (0x07) → ACT_VOL_UP
@@ -21,7 +21,7 @@
  * (useful to implement volume ramping without adding a 200 ms delay).
  ******************************************************************************/
 
-#define DAM_IR_GPIO   0    // GPIO0 (BOOT pad – usable as GPIO after boot)
+#define DAM_IR_GPIO    0    // BOOT pad - pulled high, free as GPIO input after boot
 
 // Initialise RMT RX channel and spawn the decoder task.
 void dam_remote_init(int gpio);

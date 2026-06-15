@@ -21,23 +21,27 @@ static const char *TAG = "IR";
 #define NEC_BITS           32
 
 // Apple aluminium remote address (standard NEC LSB-first decoding)
-#define APPLE_ADDR  0x77E1U
+#define APPLE_ADDR  0x87EE // v4 bit-reversed 0x77E1
 
 // ─── Module state ─────────────────────────────────────────────────────────────
-static rmt_channel_handle_t  s_rx_ch   = NULL;
+static rmt_channel_handle_t   s_rx_ch   = NULL;
 static QueueHandle_t          s_rmt_q   = NULL;  // RMT ISR → decoder task
 static QueueHandle_t          s_act_q   = NULL;  // decoder task → poll()
 
 // Buffer for RMT symbols – static; must remain valid until decoder task copies it
-static rmt_symbol_word_t s_symbols[64];
+static rmt_symbol_word_t s_symbols[128];
 
 // Last decoded action for repeat frames
 static dam_action_t s_last_action = ACT_NONE;
 static bool         s_is_repeat   = false;
 
-// 200 ms debounce (applies to non-repeat frames)
-static int64_t s_last_us = 0;
-#define DEBOUNCE_US  200000LL
+static int64_t s_last_vol_us     = 0;
+static int64_t s_last_channel_us = 0;
+static int64_t s_last_filter_us  = 0;
+static int64_t s_last_other_us   = 0;
+#define DEBOUNCE_VOL_US      100000LL   // 100 ms between volume steps
+#define DEBOUNCE_CHANNEL_US 1000000LL   // 1000 ms between channel changes
+#define DEBOUNCE_OTHER_US   1000000LL   // 1000 ms for mute
 
 // ─── RMT ISR callback (called from ISR context) ───────────────────────────────
 static bool IRAM_ATTR rmt_rx_done(rmt_channel_handle_t ch,
@@ -99,23 +103,17 @@ static dam_action_t _decode_nec(const rmt_symbol_word_t *syms, size_t n)
     uint16_t address = (uint16_t)(raw & 0xFFFF);
     uint8_t  command = (uint8_t)((raw >> 16) & 0xFF);
 
-    ESP_LOGD(TAG, "NEC addr=0x%04X cmd=0x%02X", address, command);
-
-    if (address != APPLE_ADDR) {
-        ESP_LOGD(TAG, "Unknown remote 0x%04X, ignoring", address);
-        return ACT_NONE;
-    }
+    if (address != APPLE_ADDR) return ACT_NONE;
 
     switch (command) {
-        case 0x0B: return ACT_CHANNEL_LEFT;  // Up    → cycle input backward
-        case 0x0D: return ACT_CHANNEL_RIGHT; // Down  → cycle input forward
-        case 0x07: return ACT_VOL_UP;        // Right → volume up
-        case 0x08: return ACT_VOL_DOWN;      // Left  → volume down
-        case 0x5D: return ACT_MUTE;          // Centre→ mute toggle
-        case 0x02: return ACT_FILTER_CYCLE;  // Menu  → cycle filter
-        default:
-            ESP_LOGD(TAG, "Unmapped cmd=0x%02X", command);
-            return ACT_NONE;
+        case 0x0B: return ACT_VOL_UP;        // Up     → volume up
+        case 0x0D: return ACT_VOL_DOWN;      // Down   → volume down
+        case 0x07: return ACT_CHANNEL_RIGHT; // Right  → cycle input forward
+        case 0x08: return ACT_CHANNEL_LEFT;  // Left   → cycle input backward
+        case 0x5D: return ACT_MUTE;          // Centre → mute toggle
+        case 0x02: return ACT_FILTER_CYCLE;  // Menu   → cycle filter
+        case 0x5E: return ACT_FILTER_CYCLE;  // Play/Pause
+        default:   return ACT_NONE;
     }
 }
 
@@ -142,10 +140,21 @@ static void remote_task(void *arg)
 
         if (act == ACT_NONE) continue;
 
-        // Debounce non-repeat frames
+        // Per-action debounce (repeat frames bypass this for smooth volume ramping)
         int64_t now = esp_timer_get_time();
-        if (!s_is_repeat && (now - s_last_us) < DEBOUNCE_US) continue;
-        s_last_us = now;
+        if (!s_is_repeat) {
+            int64_t guard;
+            int64_t *last;
+            if (act == ACT_VOL_UP || act == ACT_VOL_DOWN) {
+                guard = DEBOUNCE_VOL_US;     last = &s_last_vol_us;
+            } else if (act == ACT_CHANNEL_LEFT || act == ACT_CHANNEL_RIGHT) {
+                guard = DEBOUNCE_CHANNEL_US; last = &s_last_channel_us;
+            } else {
+                guard = DEBOUNCE_OTHER_US;   last = &s_last_other_us;
+            }
+            if ((now - *last) < guard) continue;
+            *last = now;
+        }
 
         s_last_action = act;
 
@@ -167,7 +176,7 @@ void dam_remote_init(int gpio)
         .gpio_num           = gpio,
         .clk_src            = RMT_CLK_SRC_DEFAULT,
         .resolution_hz      = NEC_RES_HZ,
-        .mem_block_symbols  = 64,
+        .mem_block_symbols  = 128,
     };
     ESP_ERROR_CHECK(rmt_new_rx_channel(&rx_cfg, &s_rx_ch));
 

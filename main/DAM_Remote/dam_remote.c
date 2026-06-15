@@ -35,13 +35,8 @@ static rmt_symbol_word_t s_symbols[128];
 static dam_action_t s_last_action = ACT_NONE;
 static bool         s_is_repeat   = false;
 
-static int64_t s_last_vol_us     = 0;
-static int64_t s_last_channel_us = 0;
-static int64_t s_last_filter_us  = 0;
-static int64_t s_last_other_us   = 0;
-#define DEBOUNCE_VOL_US      100000LL   // 100 ms between volume steps
-#define DEBOUNCE_CHANNEL_US 1000000LL   // 1000 ms between channel changes
-#define DEBOUNCE_OTHER_US   1000000LL   // 1000 ms for mute
+static int64_t s_last_us = 0;
+#define DEBOUNCE_US  200000LL   // 200 ms between any button presses
 
 // ─── RMT ISR callback (called from ISR context) ───────────────────────────────
 static bool IRAM_ATTR rmt_rx_done(rmt_channel_handle_t ch,
@@ -143,17 +138,8 @@ static void remote_task(void *arg)
         // Per-action debounce (repeat frames bypass this for smooth volume ramping)
         int64_t now = esp_timer_get_time();
         if (!s_is_repeat) {
-            int64_t guard;
-            int64_t *last;
-            if (act == ACT_VOL_UP || act == ACT_VOL_DOWN) {
-                guard = DEBOUNCE_VOL_US;     last = &s_last_vol_us;
-            } else if (act == ACT_CHANNEL_LEFT || act == ACT_CHANNEL_RIGHT) {
-                guard = DEBOUNCE_CHANNEL_US; last = &s_last_channel_us;
-            } else {
-                guard = DEBOUNCE_OTHER_US;   last = &s_last_other_us;
-            }
-            if ((now - *last) < guard) continue;
-            *last = now;
+            if ((now - s_last_us) < DEBOUNCE_US) continue;
+            s_last_us = now;
         }
 
         s_last_action = act;

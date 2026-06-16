@@ -85,9 +85,8 @@ static const char * const _inp_names[DAC_INPUT_COUNT]  = { "AUTO", "USB", "SPDIF
 static const char * const _flt_names[DAC_FILTER_COUNT] = { "LIN",  "MIX", "MIN",   "SOFT" };
 
 // ─── Colour themes (accent only; mute is always red) ─────────────────────────
-static const uint32_t _theme_hex[]        = { 0x3498DB, 0x16A085, 0x95A5A6, 0xD35400, 0x9B59B6 };
-static const char * const _theme_names[] = { "RIVER",   "GREEN",  "CONCRETE", "PUMPKIN", "AMETHYST" };
-#define THEME_COUNT  5
+static const uint32_t _theme_hex[]        = { 0x3498DB, 0x16A085, 0x95A5A6, 0xC0392B, 0x8E44AD };
+static const char * const _theme_names[] = { "RIVER",   "GREEN",  "CONCRETE", "GRANATE", "WISTERIA" };
 static int _theme_idx = 0;
 
 // ─── Styles ───────────────────────────────────────────────────────────────────
@@ -212,8 +211,7 @@ static void _on_flt_cycle(lv_event_t *e)
 static void _on_sty_cycle(lv_event_t *e)
 {
     (void)e;
-    _theme_idx = (_theme_idx + 1) % THEME_COUNT;
-    _apply_theme(_theme_idx);
+    if (_cb) _cb(ACT_STYLE_CYCLE, 0);
 }
 
 static void _on_brightness(lv_event_t *e)
@@ -255,7 +253,7 @@ static void _build(void)
     lv_obj_align(title, LV_ALIGN_LEFT_MID, PAD, 8);
 
     lv_obj_t *ver = lv_label_create(hdr);
-    lv_label_set_text(ver, "v1.1");
+    lv_label_set_text(ver, "v1.2");
     lv_obj_set_style_text_color(ver, C_TEXT_DIM, 0);
     lv_obj_set_style_text_font (ver, &lv_font_montserrat_20, 0);
     lv_obj_align(ver, LV_ALIGN_RIGHT_MID, -(PAD + 18), 8);
@@ -445,6 +443,13 @@ void dam_ui_set_filter(dac_filter_t filter)
 {
     if (!_flt_btn_lbl) return;
     lv_label_set_text(_flt_btn_lbl, _flt_names[(int)filter]);
+}
+
+void dam_ui_set_theme(int theme_idx)
+{
+    if (theme_idx < 0 || theme_idx >= THEME_COUNT) return;
+    _theme_idx = theme_idx;
+    _apply_theme(_theme_idx);
 }
 
 void dam_ui_set_brightness(int brightness)

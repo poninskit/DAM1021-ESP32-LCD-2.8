@@ -19,12 +19,13 @@ typedef struct {
     dac_input_t  input;
     dac_filter_t filter;
     int          brightness;  // 10-100
+    int          theme;       // 0 … THEME_COUNT-1
 } dam_state_t;
 
 // Default initialiser
 #define DAM_STATE_DEFAULT { .volume = VOL_DEFAULT, .muted = false, \
                             .input = DAC_INPUT_AUTO, .filter = DAC_FILTER_LINEAR, \
-                            .brightness = BRIGHTNESS_DEFAULT }
+                            .brightness = BRIGHTNESS_DEFAULT, .theme = 0 }
 
 // Initialise NVS subsystem (call once in app_main before load/save).
 void dam_nvs_init(void);

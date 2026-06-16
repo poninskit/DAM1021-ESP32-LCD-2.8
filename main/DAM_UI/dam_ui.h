@@ -21,6 +21,9 @@ typedef enum {
 } dac_filter_t;
 #define DAC_FILTER_COUNT 4
 
+// ─── Colour themes ────────────────────────────────────────────────────────────
+#define THEME_COUNT 5
+
 // ─── User actions ─────────────────────────────────────────────────────────────
 typedef enum {
     ACT_NONE = 0,
@@ -49,6 +52,9 @@ typedef enum {
     ACT_FILTER_CYCLE,   // cycle filter forward
     ACT_FILTER_BACK,    // cycle filter backward
 
+    // Style/theme cycle – from touch button
+    ACT_STYLE_CYCLE,
+
     // Brightness – from UI slider
     ACT_BRIGHTNESS_SET, // value = new brightness 10-100
 } dam_action_t;
@@ -65,3 +71,4 @@ void dam_ui_set_volume    (int vol, bool muted);   // vol 0-99
 void dam_ui_set_input     (dac_input_t  input);
 void dam_ui_set_filter    (dac_filter_t filter);
 void dam_ui_set_brightness(int brightness);        // 10-100
+void dam_ui_set_theme     (int theme_idx);         // 0 … THEME_COUNT-1

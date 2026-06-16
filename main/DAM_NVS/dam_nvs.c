@@ -62,9 +62,15 @@ void dam_nvs_load(dam_state_t *state)
         if (state->brightness > BRIGHTNESS_MAX) state->brightness = BRIGHTNESS_MAX;
     }
 
+    int8_t theme;
+    if (nvs_get_i8(h, "theme", &theme) == ESP_OK &&
+        theme >= 0 && theme < THEME_COUNT) {
+        state->theme = (int)theme;
+    }
+
     nvs_close(h);
-    ESP_LOGI(TAG, "Loaded vol=%d muted=%d input=%d filter=%d brightness=%d",
-             state->volume, state->muted, state->input, state->filter, state->brightness);
+    ESP_LOGI(TAG, "Loaded vol=%d muted=%d input=%d filter=%d brightness=%d theme=%d",
+             state->volume, state->muted, state->input, state->filter, state->brightness, state->theme);
 }
 
 void dam_nvs_save(const dam_state_t *state)
@@ -80,8 +86,9 @@ void dam_nvs_save(const dam_state_t *state)
     nvs_set_i8 (h, "input",      (int8_t)state->input);
     nvs_set_i8 (h, "filter",     (int8_t)state->filter);
     nvs_set_i32(h, "brightness", (int32_t)state->brightness);
+    nvs_set_i8 (h, "theme",      (int8_t)state->theme);
     nvs_commit(h);
     nvs_close(h);
-    ESP_LOGD(TAG, "Saved vol=%d muted=%d input=%d filter=%d brightness=%d",
-             state->volume, state->muted, state->input, state->filter, state->brightness);
+    ESP_LOGD(TAG, "Saved vol=%d muted=%d input=%d filter=%d brightness=%d theme=%d",
+             state->volume, state->muted, state->input, state->filter, state->brightness, state->theme);
 }

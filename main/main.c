@@ -130,6 +130,13 @@ static void handle_action(dam_action_t action, int value)
         dam_nvs_save(&s_state);
         break;
 
+    // ── Style / theme (touch button cycle) ───────────────────────────────────
+    case ACT_STYLE_CYCLE:
+        s_state.theme = (s_state.theme + 1) % THEME_COUNT;
+        dam_ui_set_theme(s_state.theme);
+        dam_nvs_save(&s_state);
+        break;
+
     // ── Brightness (slider) ───────────────────────────────────────────────────
     case ACT_BRIGHTNESS_SET:
         if (value >= BRIGHTNESS_MIN && value <= BRIGHTNESS_MAX) {
@@ -165,6 +172,7 @@ void app_main(void)
     dam_ui_set_input     (s_state.input);
     dam_ui_set_filter    (s_state.filter);
     dam_ui_set_brightness(s_state.brightness);
+    dam_ui_set_theme     (s_state.theme);
     Set_Backlight((uint8_t)s_state.brightness);
 
     // IR remote (GPIO0 – BOOT pad, usable as input after boot)

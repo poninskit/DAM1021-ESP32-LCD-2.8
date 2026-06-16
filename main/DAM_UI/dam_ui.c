@@ -85,9 +85,9 @@ static const char * const _inp_names[DAC_INPUT_COUNT]  = { "AUTO", "USB", "SPDIF
 static const char * const _flt_names[DAC_FILTER_COUNT] = { "LIN",  "MIX", "MIN",   "SOFT" };
 
 // ─── Colour themes (accent only; mute is always red) ─────────────────────────
-static const uint32_t _theme_hex[]        = { 0x3498DB, 0x16A085, 0x95A5A6 };
-static const char * const _theme_names[] = { "RIVER",   "GREEN",  "CONCRETE" };
-#define THEME_COUNT  3
+static const uint32_t _theme_hex[]        = { 0x3498DB, 0x16A085, 0x95A5A6, 0xD35400, 0x9B59B6 };
+static const char * const _theme_names[] = { "RIVER",   "GREEN",  "CONCRETE", "PUMPKIN", "AMETHYST" };
+#define THEME_COUNT  5
 static int _theme_idx = 0;
 
 // ─── Styles ───────────────────────────────────────────────────────────────────

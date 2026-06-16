@@ -13,7 +13,8 @@
  *   Right  (0x07) → ACT_VOL_UP
  *   Left   (0x08) → ACT_VOL_DOWN
  *   Centre (0x5D) → ACT_MUTE
- *   Menu   (0x02) → ACT_FILTER_CYCLE
+ *   Menu       (0x02) → ACT_FILTER_CYCLE
+ *   Play/Pause (0x5E) → ACT_STYLE_CYCLE
  *
  * Initialise dam_remote_init() once.  Then call dam_remote_poll() from the
  * main loop; it is non-blocking and returns ACT_NONE when the queue is empty.

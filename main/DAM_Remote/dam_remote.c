@@ -107,7 +107,7 @@ static dam_action_t _decode_nec(const rmt_symbol_word_t *syms, size_t n)
         case 0x08: return ACT_CHANNEL_LEFT;  // Left   → cycle input backward
         case 0x5D: return ACT_MUTE;          // Centre → mute toggle
         case 0x02: return ACT_FILTER_CYCLE;  // Menu   → cycle filter
-        case 0x5E: return ACT_FILTER_CYCLE;  // Play/Pause
+        case 0x5E: return ACT_STYLE_CYCLE;   // Play/Pause → cycle style
         default:   return ACT_NONE;
     }
 }

@@ -33,22 +33,23 @@ extern const lv_font_t lv_font_montserrat_digits_64;
 #define SCR_H        480
 #define PAD           32
 #define LBL_H         20
-#define HEADER_H      50
+#define HEADER_H      68    
 
 // ── Left panel – arc + mute  ────────────────────────
-#define LP_W          300     // wider to contain 264-px arc with margin each side
-#define ARC_SIZE      264     // 220 * 1.2
-#define ARC_TRACK_W   22     // 18 * 1.2
-#define MUTE_H        50     // 60 
-#define MUTE_W        (ARC_SIZE - 46)
-#define ARC_MUTE_GAP  10
+#define LP_W          300
+#define ARC_SIZE      250   
+#define ARC_R_PAD     18   
+#define ARC_TRACK_W   22
+#define MUTE_H        50
+#define MUTE_W        (ARC_SIZE - 64)   // 32px extra left inset vs centred
+#define ARC_MUTE_GAP  8
 
 // Vertically centre [arc + gap + mute] in left panel
 #define LP_CONTENT_H  (ARC_SIZE + ARC_MUTE_GAP + MUTE_H)
 #define LP_TOP_PAD    ((SCR_H - HEADER_H - LP_CONTENT_H) / 2)
-#define ARC_X         ((LP_W - ARC_SIZE) / 2)
+#define ARC_X         (LP_W - ARC_SIZE - ARC_R_PAD)   // right-aligned
 #define ARC_Y         (HEADER_H + LP_TOP_PAD)
-#define MUTE_X        (ARC_X + ((ARC_SIZE - MUTE_W) / 2))
+#define MUTE_X        (ARC_X + (ARC_SIZE - MUTE_W) / 2)   // centred under arc
 #define MUTE_Y        (ARC_Y + ARC_SIZE + ARC_MUTE_GAP)
 
 // ── Right panel ───────────────────────────────────────────────────────────────
@@ -59,27 +60,35 @@ extern const lv_font_t lv_font_montserrat_digits_64;
 
 // Brightness slider – far-right column
 #define BRIGHT_SLIDER_W   16
-#define BRIGHT_SLIDER_H   340
-#define BRIGHT_SLIDER_X   (RP_X + RP_W - PAD  - BRIGHT_SLIDER_W)  // 590
-#define BRIGHT_SLIDER_Y   (HEADER_H + (SCR_H - HEADER_H - BRIGHT_SLIDER_H) / 2)  // 165
+#define BRIGHT_SLIDER_H   292   // −48px (10% SCR_H) shorter at bottom
+#define BRIGHT_SLIDER_X   (RP_X + RP_W - PAD - BRIGHT_SLIDER_W - 24)  // −24px left
+#define BRIGHT_SLIDER_Y   (HEADER_H + ((SCR_H - HEADER_H - BRIGHT_SLIDER_H) / 2) - 4)
 
 // Single-cycle buttons
-#define ROW_H          70    
+#define ROW_H          66    
 #define BTN_W          (BRIGHT_SLIDER_X - RP_INNER_X - PAD)  // 297
 
-// Vertically centre [inp-lbl + gap + inp-btn + sect-gap + flt-lbl + gap + flt-btn]
+// Vertically centre [inp + flt + sty] in right panel
 #define RP_LBL_GAP     6
-#define RP_SECT_GAP    30
-#define RP_CONTENT_H   (2 * (LBL_H + RP_LBL_GAP + ROW_H) + RP_SECT_GAP)  // 194 px
-#define RP_TOP_PAD     ((SCR_H - HEADER_H - RP_CONTENT_H) / 2)            // 118 px
-#define INP_LBL_Y      (HEADER_H + RP_TOP_PAD)                             // 168
-#define INP_BTN_Y      (INP_LBL_Y + LBL_H + RP_LBL_GAP)                   // 194
-#define FLT_LBL_Y      (INP_BTN_Y + ROW_H + RP_SECT_GAP)                  // 280
-#define FLT_BTN_Y      (FLT_LBL_Y + LBL_H + RP_LBL_GAP)                   // 306
+#define RP_SECT_GAP    22
+#define RP_CONTENT_H   (3 * (LBL_H + RP_LBL_GAP + ROW_H) + 2 * RP_SECT_GAP)
+#define RP_TOP_PAD     (((SCR_H - HEADER_H - RP_CONTENT_H) / 2) - 18)
+#define INP_LBL_Y      (HEADER_H + RP_TOP_PAD)
+#define INP_BTN_Y      (INP_LBL_Y + LBL_H + RP_LBL_GAP)
+#define FLT_LBL_Y      (INP_BTN_Y + ROW_H + RP_SECT_GAP)
+#define FLT_BTN_Y      (FLT_LBL_Y + LBL_H + RP_LBL_GAP)
+#define STY_LBL_Y      (FLT_BTN_Y + ROW_H + RP_SECT_GAP)
+#define STY_BTN_Y      (STY_LBL_Y + LBL_H + RP_LBL_GAP)
 
 // ─── Names ───────────────────────────────────────────────────────────────────
 static const char * const _inp_names[DAC_INPUT_COUNT]  = { "AUTO", "USB", "SPDIF", "OPT" };
 static const char * const _flt_names[DAC_FILTER_COUNT] = { "LIN",  "MIX", "MIN",   "SOFT" };
+
+// ─── Colour themes (accent only; mute is always red) ─────────────────────────
+static const uint32_t _theme_hex[]        = { 0x3498DB, 0x16A085, 0x95A5A6 };
+static const char * const _theme_names[] = { "RIVER",   "GREEN",  "CONCRETE" };
+#define THEME_COUNT  3
+static int _theme_idx = 0;
 
 // ─── Styles ───────────────────────────────────────────────────────────────────
 static lv_style_t _sty_scr;
@@ -92,8 +101,12 @@ static lv_style_t _sty_mute_on;
 static lv_obj_t *_arc            = NULL;
 static lv_obj_t *_vol_num        = NULL;
 static lv_obj_t *_vol_db         = NULL;
-static lv_obj_t *_inp_btn_lbl    = NULL;  // label inside input cycle button
-static lv_obj_t *_flt_btn_lbl    = NULL;  // label inside filter cycle button
+static lv_obj_t *_inp_btn        = NULL;
+static lv_obj_t *_inp_btn_lbl    = NULL;
+static lv_obj_t *_flt_btn        = NULL;
+static lv_obj_t *_flt_btn_lbl    = NULL;
+static lv_obj_t *_sty_btn        = NULL;
+static lv_obj_t *_sty_btn_lbl    = NULL;
 static lv_obj_t *_mute_btn       = NULL;
 static lv_obj_t *_mute_lbl       = NULL;
 static lv_obj_t *_bright_slider  = NULL;
@@ -101,6 +114,24 @@ static lv_obj_t *_bright_pct_lbl = NULL;
 
 static dam_action_cb_t _cb       = NULL;
 static bool            _prog_set = false;
+
+// ─── Theme application ───────────────────────────────────────────────────────
+static void _apply_theme(int idx)
+{
+    lv_color_t c = lv_color_hex(_theme_hex[idx]);
+
+    lv_obj_set_style_arc_color   (_arc,          c, LV_PART_INDICATOR);
+    lv_obj_set_style_bg_color    (_bright_slider, c, LV_PART_INDICATOR);
+
+    lv_obj_set_style_border_color(_inp_btn, c, 0);
+    lv_obj_set_style_text_color  (_inp_btn, c, 0);
+    lv_obj_set_style_border_color(_flt_btn, c, 0);
+    lv_obj_set_style_text_color  (_flt_btn, c, 0);
+    lv_obj_set_style_border_color(_sty_btn, c, 0);
+    lv_obj_set_style_text_color  (_sty_btn, c, 0);
+
+    lv_label_set_text(_sty_btn_lbl, _theme_names[idx]);
+}
 
 // ─── Style init ───────────────────────────────────────────────────────────────
 static void _init_styles(void)
@@ -178,6 +209,13 @@ static void _on_flt_cycle(lv_event_t *e)
     if (_cb) _cb(ACT_FILTER_CYCLE, 0);
 }
 
+static void _on_sty_cycle(lv_event_t *e)
+{
+    (void)e;
+    _theme_idx = (_theme_idx + 1) % THEME_COUNT;
+    _apply_theme(_theme_idx);
+}
+
 static void _on_brightness(lv_event_t *e)
 {
     if (_prog_set) return;
@@ -214,13 +252,13 @@ static void _build(void)
     lv_label_set_text(title, "DAM 1021");
     lv_obj_set_style_text_color(title, C_TEXT_DIM, 0);
     lv_obj_set_style_text_font (title, &lv_font_montserrat_36, 0);
-    lv_obj_align(title, LV_ALIGN_LEFT_MID, PAD, 0);
+    lv_obj_align(title, LV_ALIGN_LEFT_MID, PAD, 8);
 
     lv_obj_t *ver = lv_label_create(hdr);
-    lv_label_set_text(ver, "v1.0");
-    lv_obj_set_style_text_color(ver, C_BORDER, 0);
+    lv_label_set_text(ver, "v1.1");
+    lv_obj_set_style_text_color(ver, C_TEXT_DIM, 0);
     lv_obj_set_style_text_font (ver, &lv_font_montserrat_20, 0);
-    lv_obj_align(ver, LV_ALIGN_RIGHT_MID, -PAD, 0);
+    lv_obj_align(ver, LV_ALIGN_RIGHT_MID, -(PAD + 18), 8);
 
     // ── Vertical divider ──────────────────────────────────────────────────────
     lv_obj_t *div = lv_obj_create(scr);
@@ -281,13 +319,13 @@ static void _build(void)
     lv_obj_add_style(inp_lbl, &_sty_lbl, 0);
     lv_obj_set_pos(inp_lbl, RP_INNER_X, INP_LBL_Y);
 
-    lv_obj_t *inp_btn = lv_btn_create(scr);
-    lv_obj_remove_style_all(inp_btn);
-    lv_obj_add_style(inp_btn, &_sty_cycle, 0);
-    lv_obj_set_size(inp_btn, BTN_W, ROW_H);
-    lv_obj_set_pos (inp_btn, RP_INNER_X, INP_BTN_Y);
-    lv_obj_add_event_cb(inp_btn, _on_inp_cycle, LV_EVENT_CLICKED, NULL);
-    _inp_btn_lbl = lv_label_create(inp_btn);
+    _inp_btn = lv_btn_create(scr);
+    lv_obj_remove_style_all(_inp_btn);
+    lv_obj_add_style(_inp_btn, &_sty_cycle, 0);
+    lv_obj_set_size(_inp_btn, BTN_W, ROW_H);
+    lv_obj_set_pos (_inp_btn, RP_INNER_X, INP_BTN_Y);
+    lv_obj_add_event_cb(_inp_btn, _on_inp_cycle, LV_EVENT_CLICKED, NULL);
+    _inp_btn_lbl = lv_label_create(_inp_btn);
     lv_label_set_text(_inp_btn_lbl, _inp_names[0]);
     lv_obj_center(_inp_btn_lbl);
 
@@ -297,15 +335,31 @@ static void _build(void)
     lv_obj_add_style(flt_lbl, &_sty_lbl, 0);
     lv_obj_set_pos(flt_lbl, RP_INNER_X, FLT_LBL_Y);
 
-    lv_obj_t *flt_btn = lv_btn_create(scr);
-    lv_obj_remove_style_all(flt_btn);
-    lv_obj_add_style(flt_btn, &_sty_cycle, 0);
-    lv_obj_set_size(flt_btn, BTN_W, ROW_H);
-    lv_obj_set_pos (flt_btn, RP_INNER_X, FLT_BTN_Y);
-    lv_obj_add_event_cb(flt_btn, _on_flt_cycle, LV_EVENT_CLICKED, NULL);
-    _flt_btn_lbl = lv_label_create(flt_btn);
+    _flt_btn = lv_btn_create(scr);
+    lv_obj_remove_style_all(_flt_btn);
+    lv_obj_add_style(_flt_btn, &_sty_cycle, 0);
+    lv_obj_set_size(_flt_btn, BTN_W, ROW_H);
+    lv_obj_set_pos (_flt_btn, RP_INNER_X, FLT_BTN_Y);
+    lv_obj_add_event_cb(_flt_btn, _on_flt_cycle, LV_EVENT_CLICKED, NULL);
+    _flt_btn_lbl = lv_label_create(_flt_btn);
     lv_label_set_text(_flt_btn_lbl, _flt_names[0]);
     lv_obj_center(_flt_btn_lbl);
+
+    // ── STYLE cycle button (right panel) ─────────────────────────────────────
+    lv_obj_t *sty_lbl = lv_label_create(scr);
+    lv_label_set_text(sty_lbl, "STYLE");
+    lv_obj_add_style(sty_lbl, &_sty_lbl, 0);
+    lv_obj_set_pos(sty_lbl, RP_INNER_X, STY_LBL_Y);
+
+    _sty_btn = lv_btn_create(scr);
+    lv_obj_remove_style_all(_sty_btn);
+    lv_obj_add_style(_sty_btn, &_sty_cycle, 0);
+    lv_obj_set_size(_sty_btn, BTN_W, ROW_H);
+    lv_obj_set_pos (_sty_btn, RP_INNER_X, STY_BTN_Y);
+    lv_obj_add_event_cb(_sty_btn, _on_sty_cycle, LV_EVENT_CLICKED, NULL);
+    _sty_btn_lbl = lv_label_create(_sty_btn);
+    lv_label_set_text(_sty_btn_lbl, _theme_names[0]);
+    lv_obj_center(_sty_btn_lbl);
 
     // ── Brightness slider (far-right column) ─────────────────────────────────
     _bright_slider = lv_slider_create(scr);
@@ -342,6 +396,8 @@ static void _build(void)
     lv_obj_set_style_text_color(_bright_pct_lbl, C_TEXT_DIM, 0);
     lv_obj_set_style_text_font (_bright_pct_lbl, &lv_font_montserrat_16, 0);
     lv_obj_align_to(_bright_pct_lbl, _bright_slider, LV_ALIGN_OUT_BOTTOM_MID, 0, 6);
+
+    _apply_theme(0);   // initialise with RIVER
 }
 
 // ─── Public API ───────────────────────────────────────────────────────────────

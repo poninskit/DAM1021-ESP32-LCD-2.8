@@ -135,9 +135,12 @@ static void remote_task(void *arg)
 
         if (act == ACT_NONE) continue;
 
-        // Per-action debounce (repeat frames bypass this for smooth volume ramping)
         int64_t now = esp_timer_get_time();
-        if (!s_is_repeat) {
+        if (s_is_repeat) {
+            // Only volume repeats; all other buttons require a new press
+            if (act != ACT_VOL_UP && act != ACT_VOL_DOWN) continue;
+        } else {
+            // Single press: apply 200 ms debounce
             if ((now - s_last_us) < DEBOUNCE_US) continue;
             s_last_us = now;
         }

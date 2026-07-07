@@ -49,23 +49,29 @@ static void handle_action(dam_action_t action, int value)
         break;
 
     // ── Volume (remote ±1 step) ───────────────────────────────────────────────
-    case ACT_VOL_UP:
-        if (!s_state.muted && s_state.volume < VOL_MAX) {
-            s_state.volume++;
-            dam_serial_send_volume(s_state.volume);
+    case ACT_VOL_UP: {
+        int step = dam_remote_is_repeat() ? 2 : 1;
+        if (s_state.volume < VOL_MAX) {
+            s_state.volume += step;
+            if (s_state.volume > VOL_MAX) s_state.volume = VOL_MAX;
+            if (!s_state.muted) dam_serial_send_volume(s_state.volume);
             dam_ui_set_volume(s_state.volume, s_state.muted);
             dam_nvs_save(&s_state);
         }
         break;
+    }
 
-    case ACT_VOL_DOWN:
-        if (!s_state.muted && s_state.volume > VOL_MIN) {
-            s_state.volume--;
-            dam_serial_send_volume(s_state.volume);
+    case ACT_VOL_DOWN: {
+        int step = dam_remote_is_repeat() ? 2 : 1;
+        if (s_state.volume > VOL_MIN) {
+            s_state.volume -= step;
+            if (s_state.volume < VOL_MIN) s_state.volume = VOL_MIN;
+            if (!s_state.muted) dam_serial_send_volume(s_state.volume);
             dam_ui_set_volume(s_state.volume, s_state.muted);
             dam_nvs_save(&s_state);
         }
         break;
+    }
 
     // ── Mute ──────────────────────────────────────────────────────────────────
     case ACT_MUTE:

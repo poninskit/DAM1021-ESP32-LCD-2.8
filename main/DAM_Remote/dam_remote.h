@@ -7,14 +7,18 @@
  * Wiring: IR receiver (e.g. TSOP4838) signal pin → IR_GPIO (default GPIO0).
  *   TSOP output is active-LOW: LOW when IR burst is received.
  *
- * Apple remote NEC mapping (address = 0x87EE):
- *   Up     (0x0B) → ACT_CHANNEL_LEFT   cycle input backward
- *   Down   (0x0D) → ACT_CHANNEL_RIGHT  cycle input forward
- *   Right  (0x07) → ACT_VOL_UP
- *   Left   (0x08) → ACT_VOL_DOWN
- *   Centre (0x5D) → ACT_MUTE
- *   Menu       (0x02) → ACT_FILTER_CYCLE
- *   Play/Pause (0x5E) → ACT_STYLE_CYCLE
+ * Accepts Apple aluminum remote only (NEC address 0x87EE).
+ * All other IR sources (TV remotes, etc.) are silently ignored.
+ *
+ * Two remotes supported — both use addr 0x87EE, different command codes:
+ *   Button      Remote A   Remote B
+ *   Up          0x0B       0x0A   → ACT_VOL_UP
+ *   Down        0x0D       0x0C   → ACT_VOL_DOWN
+ *   Right       0x07       0x06   → ACT_CHANNEL_RIGHT
+ *   Left        0x08       0x09   → ACT_CHANNEL_LEFT
+ *   Centre      0x5D       0x05/0x5C → ACT_MUTE
+ *   Menu        0x02       0x03   → ACT_FILTER_CYCLE
+ *   Play/Pause  0x5E       0x5F   → ACT_STYLE_CYCLE
  *
  * Initialise dam_remote_init() once.  Then call dam_remote_poll() from the
  * main loop; it is non-blocking and returns ACT_NONE when the queue is empty.

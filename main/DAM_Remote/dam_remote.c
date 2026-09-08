@@ -20,8 +20,6 @@ static const char *TAG = "IR";
 #define NEC_BIT1_SPACE_MIN 1100      // bit-1 space ≥ 1.1 ms (nominal 1687)
 #define NEC_BITS           32
 
-// Apple aluminium remote address (standard NEC LSB-first decoding)
-#define APPLE_ADDR  0x87EE // v4 bit-reversed 0x77E1
 
 // ─── Module state ─────────────────────────────────────────────────────────────
 static rmt_channel_handle_t   s_rx_ch   = NULL;
@@ -98,16 +96,29 @@ static dam_action_t _decode_nec(const rmt_symbol_word_t *syms, size_t n)
     uint16_t address = (uint16_t)(raw & 0xFFFF);
     uint8_t  command = (uint8_t)((raw >> 16) & 0xFF);
 
-    if (address != APPLE_ADDR) return ACT_NONE;
+    // Only accept Apple aluminum remote frames; ignore all other IR sources
+    if (address != 0x87EE) return ACT_NONE;
 
     switch (command) {
-        case 0x0B: return ACT_VOL_UP;        // Up     → volume up
-        case 0x0D: return ACT_VOL_DOWN;      // Down   → volume down
-        case 0x07: return ACT_CHANNEL_RIGHT; // Right  → cycle input forward
-        case 0x08: return ACT_CHANNEL_LEFT;  // Left   → cycle input backward
-        case 0x5D: return ACT_MUTE;          // Centre → mute toggle
-        case 0x02: return ACT_FILTER_CYCLE;  // Menu   → cycle filter
-        case 0x5E: return ACT_STYLE_CYCLE;   // Play/Pause → cycle style
+        // ── Remote A (A1294) ─────────────────────────────────────────────────
+        case 0x0B: return ACT_VOL_UP;        // Up
+        case 0x0D: return ACT_VOL_DOWN;      // Down
+        case 0x07: return ACT_CHANNEL_RIGHT; // Right
+        case 0x08: return ACT_CHANNEL_LEFT;  // Left
+        case 0x5D: return ACT_MUTE;          // Centre
+        case 0x02: return ACT_FILTER_CYCLE;  // Menu
+        case 0x5E: return ACT_STYLE_CYCLE;   // Play/Pause
+
+        // ── Remote B (alternate codes) ────────────────────────────────────────
+        case 0x0A: return ACT_VOL_UP;        // Up
+        case 0x0C: return ACT_VOL_DOWN;      // Down
+        case 0x06: return ACT_CHANNEL_RIGHT; // Right
+        case 0x09: return ACT_CHANNEL_LEFT;  // Left
+        case 0x05: return ACT_MUTE;          // Centre (short press, also leads Play/Pause)
+        case 0x5C: return ACT_MUTE;          // Centre (full press)
+        case 0x03: return ACT_FILTER_CYCLE;  // Menu
+        case 0x5F: return ACT_STYLE_CYCLE;   // Play/Pause (full press)
+
         default:   return ACT_NONE;
     }
 }
